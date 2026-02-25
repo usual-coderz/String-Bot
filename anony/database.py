@@ -2,25 +2,62 @@
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_URL
-
-# ===============================
-# MONGODB CONNECTION
-# ===============================
-mongo = AsyncIOMotorClient(MONGO_URL)
-db = mongo["AnonyBot"]
-
-# Collections
-users_col = db.users
-forcejoin_col = db.forcejoin
+from anony import logger
 
 
-# =====================================================
+# =====================================
+# DATABASE CLASS
+# =====================================
+
+class Database:
+
+    def __init__(self):
+        self.mongo = AsyncIOMotorClient(MONGO_URI)
+        self.db = self.mongo["AnonyBot"]
+
+        # collections
+        self.users = self.db.users
+        self.settings = self.db.settings
+
+    async def connect(self):
+        try:
+            await self.mongo.admin.command("ping")
+            logger.info("✅ MongoDB Connected Successfully")
+        except Exception as e:
+            raise SystemExit(f"MongoDB Connection Failed: {e}")
+
+    async def close(self):
+        self.mongo.close()
+        logger.info("MongoDB connection closed")
+
+    # ==========================
+    # USER SYSTEM
+    # ==========================
+
+    async def is_user(self, user_id: int):
+        return await self.users.find_one({"_id": user_id})
+
+    async def add_user(self, user_id: int):
+        if not await self.is_user(user_id):
+            await self.users.insert_one({"_id": user_id})
+
+    async def get_users(self):
+        users = []
+        async for user in self.users.find():
+            users.append(user["_id"])
+        return users
+
+
+# Global DB Object
+db = Database()
+
+
+# =====================================
 # FORCE JOIN SYSTEM
-# =====================================================
+# =====================================
 
-# Get all force join channels
 async def get_forcejoin_channels():
-    data = await forcejoin_col.find_one({"_id": "forcejoin"})
+    data = await db.settings.find_one({"_id": "forcejoin"})
 
     if not data:
         return []
@@ -28,49 +65,16 @@ async def get_forcejoin_channels():
     return data.get("channels", [])
 
 
-# Add channel to forcejoin
 async def add_forcejoin_channel(channel: str):
-    data = await forcejoin_col.find_one({"_id": "forcejoin"})
-
-    if not data:
-        await forcejoin_col.insert_one({
-            "_id": "forcejoin",
-            "channels": [channel]
-        })
-        return True
-
-    if channel in data.get("channels", []):
-        return False
-
-    await forcejoin_col.update_one(
+    await db.settings.update_one(
         {"_id": "forcejoin"},
-        {"$push": {"channels": channel}}
+        {"$addToSet": {"channels": channel}},
+        upsert=True
     )
-    return True
 
 
-# Remove channel from forcejoin
 async def remove_forcejoin_channel(channel: str):
-    await forcejoin_col.update_one(
+    await db.settings.update_one(
         {"_id": "forcejoin"},
         {"$pull": {"channels": channel}}
     )
-    return True
-
-
-# =====================================================
-# USER SYSTEM (Optional but useful)
-# =====================================================
-
-async def add_user(user_id: int):
-    user = await users_col.find_one({"_id": user_id})
-
-    if not user:
-        await users_col.insert_one({"_id": user_id})
-
-
-async def get_users():
-    users = []
-    async for user in users_col.find():
-        users.append(user["_id"])
-    return users
