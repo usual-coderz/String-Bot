@@ -1,5 +1,5 @@
 import asyncio
-from pyrogram import Client, errors, filters, types, StopPropagation
+from pyrogram import Client, errors, filters, types, enums, StopPropagation
 from telethon import errors as telerror, TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.channels import JoinChannelRequest
@@ -147,11 +147,12 @@ async def _gen_session(_, cq: types.CallbackQuery):
 
         if pyrogram_mode:
             string_session = await client.export_session_string()
+            # ✅ FIX: Use enums.ParseMode.HTML instead of string "html"
             await client.send_message(
                 "me",
                 txt.format(sgen, string_session, SUPPORT_CHAT),
-                disable_web_page_preview=True,  # ✅ Pyrogram v2 fix
-                parse_mode="html"
+                disable_web_page_preview=True,
+                parse_mode=enums.ParseMode.HTML
             )
         else:
             string_session = client.session.save()
@@ -159,7 +160,7 @@ async def _gen_session(_, cq: types.CallbackQuery):
                 "me",
                 txt.format(sgen, string_session, SUPPORT_CHAT),
                 link_preview=False,
-                parse_mode="html",
+                parse_mode="html"
             )
 
         # Join channel
@@ -181,7 +182,8 @@ async def _gen_session(_, cq: types.CallbackQuery):
             f"✅ Successfully generated your {sgen} string session.\n\n"
             "Check your Saved Messages to get it.\n\n"
             f"A string generator bot by <a href={SUPPORT_CHAT}>Veron Updates</a>.",
-            reply_markup=buttons.pm_key(cq.from_user.id)
+            reply_markup=buttons.pm_key(cq.from_user.id),
+            parse_mode=enums.ParseMode.HTML
         )
     except:
         pass
