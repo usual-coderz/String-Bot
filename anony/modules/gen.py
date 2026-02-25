@@ -45,29 +45,34 @@ async def _gen_session(_, cq: types.CallbackQuery):
     )
 
     # -----------------------------
-    # Ask for API ID or skip both
-    # -----------------------------
-    api_id_text = await listen(cq, "Please enter your <b>API ID</b> or /skip:")
-    if api_id_text.strip() == "/skip":
-        api_id = API_ID
-        api_hash = API_HASH
-    else:
-        try:
-            api_id = int(api_id_text)
-        except ValueError:
-            return await cq.message.reply_text(
-                "The API ID you sent is invalid.\n\nPlease start again.",
-                reply_markup=buttons.retry_key(),
-            )
+# Instruction + API ID prompt in ONE message
+# -----------------------------
+api_id_text = await listen(
+    cq,
+    "Starting {0} session generator...\n\n"
+    "If you don't have API ID or API HASH, send /skip to use the bot's default values.\n\n"
+    "Please enter your <b>API ID</b> or /skip:".format(sgen),
+)
+if api_id_text.strip() == "/skip":
+    api_id = API_ID
+    api_hash = API_HASH
+else:
+    try:
+        api_id = int(api_id_text)
+    except ValueError:
+        return await cq.message.reply_text(
+            "The API ID you sent is invalid.\n\nPlease start again.",
+            reply_markup=buttons.retry_key(),
+        )
 
-        # Ask for API HASH only if API ID was entered
-        api_hash_text = await listen(cq, "Please enter your <b>API HASH</b>:")
-        if len(api_hash_text) < 30:
-            return await cq.message.reply_text(
-                "The API HASH you sent is invalid.\n\nPlease start again.",
-                reply_markup=buttons.retry_key(),
-            )
-        api_hash = api_hash_text
+    # Ask for API HASH only if API ID was entered manually
+    api_hash_text = await listen(cq, "Please enter your <b>API HASH</b>:")
+    if len(api_hash_text) < 30:
+        return await cq.message.reply_text(
+            "The API HASH you sent is invalid.\n\nPlease start again.",
+            reply_markup=buttons.retry_key(),
+        )
+    api_hash = api_hash_text
 
     # -----------------------------
     # Ask for phone number
