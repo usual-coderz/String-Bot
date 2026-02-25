@@ -1,12 +1,12 @@
 # anony/database.py
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from config import MONGO_URI
+from config import MONGO_URL
 
 # ===============================
 # MONGODB CONNECTION
 # ===============================
-mongo = AsyncIOMotorClient(MONGO_URI)
+mongo = AsyncIOMotorClient(MONGO_URL)
 db = mongo["AnonyBot"]
 
 # Collections
