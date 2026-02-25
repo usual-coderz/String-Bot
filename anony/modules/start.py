@@ -17,24 +17,25 @@ async def f_start(_, m):
 
     await m.reply_text(
     f"""
-✨ **Wᴇʟᴄᴏᴍᴇ {m.from_user.mention} !**
+✨ <b>Wᴇʟᴄᴏᴍᴇ {m.from_user.mention} !</b>
 
-ɪ'ᴍ **{app.mention}** ⚡
+ɪ'ᴍ <b>{app.mention}</b> ⚡
 
-🔐 A Pᴏᴡᴇʀғᴜʟ **Tᴇʟᴇɢʀᴀᴍ Sᴛʀɪɴɢ Sᴇssɪᴏɴ Gᴇɴᴇʀᴀᴛᴏʀ**
+🔐 A Pᴏᴡᴇʀғᴜʟ <b>Tᴇʟᴇɢʀᴀᴍ Sᴛʀɪɴɢ Sᴇssɪᴏɴ Gᴇɴᴇʀᴀᴛᴏʀ</b>
 Bᴜɪʟᴛ Tᴏ Cʀᴇᴀᴛᴇ Sᴇᴄᴜʀᴇ Pʏʀᴏɢʀᴀᴍ & Tᴇʟᴇᴛʜᴏɴ Sᴇssɪᴏɴs Eᴀsɪʟʏ.
 
 ━━━━━━━━━━━━━━━━━━
-⚙️ **Fᴇᴀᴛᴜʀᴇs**
+⚙️ <b>Fᴇᴀᴛᴜʀᴇs</b>
 • Gᴇɴᴇʀᴀᴛᴇ Sᴇssɪᴏɴ Sᴀғᴇʟʏ
 • Fᴀsᴛ Lᴏɢɪɴ Sʏsᴛᴇᴍ
 • Oᴛᴘ Pʀᴏᴛᴇᴄᴛɪᴏɴ
 • Pʀɪᴠᴀᴛᴇ & Sᴇᴄᴜʀᴇ
 ━━━━━━━━━━━━━━━━━━
 
-🚀 Cʟɪᴄᴋ **Gᴇɴᴇʀᴀᴛᴇ** Bᴇʟᴏᴡ Tᴏ Sᴛᴀʀᴛ Cʀᴇᴀᴛɪɴɢ Yᴏᴜʀ Sᴇssɪᴏɴ.
+🚀 Cʟɪᴄᴋ <b>Gᴇɴᴇʀᴀᴛᴇ</b> Bᴇʟᴏᴡ Tᴏ Sᴛᴀʀᴛ Cʀᴇᴀᴛɪɴɢ Yᴏᴜʀ Sᴇssɪᴏɴ.
 """,
     reply_markup=buttons.start_key(),
+    parse_mode="html",
     disable_web_page_preview=True
 )
 
