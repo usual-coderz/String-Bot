@@ -3,10 +3,18 @@ from pymongo import AsyncMongoClient
 from anony import logger
 from config import MONGO_URL
 
+
 class Database:
     def __init__(self):
+
         self.mongo = AsyncMongoClient(MONGO_URL)
-        self.users = self.mongo.StringGen.users
+
+        # DATABASE
+        self.db = self.mongo.StringGen
+
+        # COLLECTIONS
+        self.users = self.db.users
+        self.settings = self.db.settings   # ✅ ADD THIS
 
     async def connect(self) -> None:
         try:
@@ -20,6 +28,7 @@ class Database:
         await self.mongo.close()
         logger.info("Database connection closed.")
 
+    # ================= USERS =================
 
     async def is_user(self, user_id: int):
         return await self.users.find_one({"user_id": user_id})
@@ -31,27 +40,32 @@ class Database:
     async def get_users(self) -> list:
         return [doc["user_id"] async for doc in self.users.find()]
 
-# =====================================
-# FORCE JOIN DATABASE
-# =====================================
+    # =====================================
+    # FORCE JOIN DATABASE
+    # =====================================
 
-async def get_forcejoin_channels():
-    data = await db.settings.find_one({"_id": "forcejoin"})
-    if not data:
-        return []
-    return data.get("links", [])
+    async def get_forcejoin_channels(self):
 
+        data = await self.settings.find_one(
+            {"_id": "forcejoin"}
+        )
 
-async def add_forcejoin_channel(link: str):
-    await db.settings.update_one(
-        {"_id": "forcejoin"},
-        {"$addToSet": {"links": link}},
-        upsert=True
-    )
+        if not data:
+            return []
 
+        return data.get("links", [])
 
-async def remove_forcejoin_channel(link: str):
-    await db.settings.update_one(
-        {"_id": "forcejoin"},
-        {"$pull": {"links": link}}
-    )
+    async def add_forcejoin_channel(self, link: str):
+
+        await self.settings.update_one(
+            {"_id": "forcejoin"},
+            {"$addToSet": {"links": link}},
+            upsert=True
+        )
+
+    async def remove_forcejoin_channel(self, link: str):
+
+        await self.settings.update_one(
+            {"_id": "forcejoin"},
+            {"$pull": {"links": link}}
+        )
