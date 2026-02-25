@@ -1,5 +1,6 @@
 import logging
-from pyrogram import Client, enums, types
+import pyrogram
+from pyrogram import Client
 import config
 
 # --------------------------
@@ -15,19 +16,43 @@ logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # --------------------------
+# Version & feature checks
+# --------------------------
+PYRO_VERSION = tuple(map(int, pyrogram.__version__.split(".")))
+logger.info(f"Pyrogram version: {pyrogram.__version__}")
+
+# ParseMode fallback
+try:
+    from pyrogram import enums
+    PARSE_MODE = enums.ParseMode.HTML
+except (ImportError, AttributeError):
+    PARSE_MODE = "html"
+
+# LinkPreviewOptions fallback
+try:
+    from pyrogram import types
+    LINK_PREVIEW = types.LinkPreviewOptions(is_disabled=True)
+except (ImportError, AttributeError):
+    LINK_PREVIEW = None
+
+# --------------------------
 # Custom Pyro Client
 # --------------------------
 class Pyro(Client):
     def __init__(self):
-        super().__init__(
-            name="StringSession",
-            api_id=config.API_ID,
-            api_hash=config.API_HASH,
-            bot_token=config.BOT_TOKEN,
-            lang_code="en",
-            parse_mode=enums.ParseMode.HTML,                 # ✅ works in v2.x
-            link_preview_options=types.LinkPreviewOptions(is_disabled=True)
-        )
+        kwargs = {
+            "name": "StringSession",
+            "api_id": config.API_ID,
+            "api_hash": config.API_HASH,
+            "bot_token": config.BOT_TOKEN,
+            "lang_code": "en",
+            "parse_mode": PARSE_MODE,
+        }
+        if LINK_PREVIEW:
+            kwargs["link_preview_options"] = LINK_PREVIEW
+
+        super().__init__(**kwargs)
+
         self.OWNER = config.OWNER_ID
         self.id = None
         self.name = None
