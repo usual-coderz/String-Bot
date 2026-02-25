@@ -12,7 +12,7 @@ from anony import logger
 class Database:
 
     def __init__(self):
-        self.mongo = AsyncIOMotorClient(MONGO_URI)
+        self.mongo = AsyncIOMotorClient(MONGO_URL)
         self.db = self.mongo["AnonyBot"]
 
         # collections
