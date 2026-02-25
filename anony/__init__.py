@@ -12,7 +12,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
-logging.getLogger("telethon").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # --------------------------
@@ -22,11 +21,11 @@ class Pyro(Client):
     def __init__(self):
         super().__init__(
             name="StringSession",
-            api_id=config.API_ID,               # Use your config API_ID
-            api_hash=config.API_HASH,           # Use your config API_HASH
-            bot_token=config.BOT_TOKEN,         # Bot token from config
+            api_id=config.API_ID,
+            api_hash=config.API_HASH,
+            bot_token=config.BOT_TOKEN,
             lang_code="en",
-            parse_mode=enums.ParseMode.HTML,    # ✅ Pyrogram v2.x
+            parse_mode=enums.ParseMode.HTML,                 # ✅ works in v2.x
             link_preview_options=types.LinkPreviewOptions(is_disabled=True)
         )
         self.OWNER = config.OWNER_ID
@@ -36,7 +35,7 @@ class Pyro(Client):
         self.mention = None
 
     async def _start(self):
-        """Start the bot and initialize user info."""
+        """Start the bot and initialize info."""
         await super().start()
         me = await self.get_me()
         self.id = me.id
@@ -49,7 +48,6 @@ class Pyro(Client):
         """Stop the bot gracefully."""
         await super().stop()
         logger.info("Bot stopped.")
-
 
 # --------------------------
 # Instantiate bot
