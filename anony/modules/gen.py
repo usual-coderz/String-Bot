@@ -42,8 +42,7 @@ async def _gen_session(_, cq: types.CallbackQuery):
     api_id_text = await listen(
         cq,
         f"Starting {sgen} session generator...\n\n"
-        "If you don't have API ID or API HASH, send /skip to use the bot's default values.\n\n"
-        "Please enter your <b>API ID</b> or /skip:"
+"Please enter your <b>API ID</b> or /skip:"
     )
 
     if api_id_text.strip() == "/skip":
