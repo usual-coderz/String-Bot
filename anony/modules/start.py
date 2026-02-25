@@ -1,23 +1,28 @@
-from pyrogram import filters, types
+from pyrogram import filters
+from pyrogram.enums import ParseMode
 from anony.must_join import must_join
 from anony import app, buttons, db
 
 
+# ==========================================
+# START COMMAND
+# ==========================================
 @app.on_message(filters.command("start") & filters.private)
-async def f_start(_, m):
+async def f_start(_, message):
 
-    joined = await must_join(app, m.from_user.id)
+    user_id = message.from_user.id
 
-    if joined != True:
-        await m.reply_text(
+    joined = await must_join(app, user_id)
+
+    if joined is not True:
+        await message.reply_text(
             "⚡ Join required channels to continue.",
             reply_markup=joined
         )
         return
 
-    await m.reply_text(
-    f"""
-✨ <b>Wᴇʟᴄᴏᴍᴇ {m.from_user.mention} !</b>
+    text = f"""
+✨ <b>Wᴇʟᴄᴏᴍᴇ {message.from_user.mention} !</b>
 
 ɪ'ᴍ <b>{app.mention}</b> ⚡
 
@@ -25,7 +30,7 @@ async def f_start(_, m):
 Bᴜɪʟᴛ Tᴏ Cʀᴇᴀᴛᴇ Sᴇᴄᴜʀᴇ Pʏʀᴏɢʀᴀᴍ & Tᴇʟᴇᴛʜᴏɴ Sᴇssɪᴏɴs Eᴀsɪʟʏ.
 
 ━━━━━━━━━━━━━━━━━━
-⚙️ <b>Fᴇᴀᴛᴜʀᴇs</b>
+<b>⚙️ Fᴇᴀᴛᴜʀᴇs</b>
 • Gᴇɴᴇʀᴀᴛᴇ Sᴇssɪᴏɴ Sᴀғᴇʟʏ
 • Fᴀsᴛ Lᴏɢɪɴ Sʏsᴛᴇᴍ
 • Oᴛᴘ Pʀᴏᴛᴇᴄᴛɪᴏɴ
@@ -33,26 +38,34 @@ Bᴜɪʟᴛ Tᴏ Cʀᴇᴀᴛᴇ Sᴇᴄᴜʀᴇ Pʏʀᴏɢʀᴀᴍ & Tᴇʟᴇ�
 ━━━━━━━━━━━━━━━━━━
 
 🚀 Cʟɪᴄᴋ <b>Gᴇɴᴇʀᴀᴛᴇ</b> Bᴇʟᴏᴡ Tᴏ Sᴛᴀʀᴛ Cʀᴇᴀᴛɪɴɢ Yᴏᴜʀ Sᴇssɪᴏɴ.
-""",
-    reply_markup=buttons.start_key(),
-    parse_mode="html",
-    disable_web_page_preview=True
-)
+"""
 
-    await db.add_user(m.from_user.id)
+    await message.reply_text(
+        text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=buttons.start_key(),
+        disable_web_page_preview=True
+    )
 
+    await db.add_user(user_id)
+
+
+# ==========================================
+# FORCE JOIN CHECK
+# ==========================================
 @app.on_callback_query(filters.regex("check_join"))
-async def check_join_cb(client, cb):
+async def check_join_cb(client, callback):
 
-    joined = await must_join(client, cb.from_user.id)
+    joined = await must_join(client, callback.from_user.id)
 
-    if joined != True:
-        await cb.answer(
+    if joined is not True:
+        await callback.answer(
             "Join all channels first!",
             show_alert=True
         )
         return
 
-    await cb.message.edit_text(
-        "✅ Verification Successful!\nSend /start again."
+    await callback.message.edit_text(
+        "✅ <b>Verification Successful!</b>\nSend /start again.",
+        parse_mode=ParseMode.HTML
     )
