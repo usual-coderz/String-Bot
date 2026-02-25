@@ -18,7 +18,7 @@ async def listen(cq: types.CallbackQuery, text: str, timeout: int = 120) -> str:
         return message.text
     except asyncio.TimeoutError:
         await cq.message.reply_text(
-            "⏰ Timed out.\nPlease try again.", reply_markup=buttons.retry_key()
+            "Timed out.\n\nPlease try again.", reply_markup=buttons.retry_key()
         )
         raise StopPropagation
 
@@ -27,7 +27,8 @@ async def listen(cq: types.CallbackQuery, text: str, timeout: int = 120) -> str:
 async def _generate(_, cq: types.CallbackQuery):
     await cq.answer()
     await cq.message.reply_text(
-        "Please choose which session you want to generate:", reply_markup=buttons.gen_key()
+        "Please choose which session you want to generate:",
+        reply_markup=buttons.gen_key()
     )
 
 
@@ -37,10 +38,13 @@ async def _gen_session(_, cq: types.CallbackQuery):
     pyrogram_mode = sgen == "pyrogram"
     await cq.answer()
 
-    # -----------------------------
-    # API ID / HASH input
-    # -----------------------------
-    api_id_text = await listen(cq, "Please enter your <b>API ID</b> or /skip:")
+    # Single prompt with /skip info
+    api_id_text = await listen(
+        cq,
+        f"Starting {sgen} session generator...\n\n"
+        "If you don't have API ID or API HASH, send /skip to use the bot's default values.\n\n"
+        "Please enter your <b>API ID</b> or /skip:"
+    )
 
     if api_id_text.strip() == "/skip":
         api_id = API_ID
@@ -50,28 +54,22 @@ async def _gen_session(_, cq: types.CallbackQuery):
             api_id = int(api_id_text)
         except ValueError:
             return await cq.message.reply_text(
-                "❌ The API ID you sent is invalid.\nPlease start again.",
+                "The API ID you sent is invalid.\nPlease start again.",
                 reply_markup=buttons.retry_key()
             )
-
-        # Only ask for API HASH if user entered API ID manually
         api_hash_text = await listen(cq, "Please enter your <b>API HASH</b>:")
         if len(api_hash_text) < 30:
             return await cq.message.reply_text(
-                "❌ The API HASH you sent is invalid.\nPlease start again.",
+                "The API HASH you sent is invalid.\nPlease start again.",
                 reply_markup=buttons.retry_key()
             )
         api_hash = api_hash_text
 
-    # -----------------------------
-    # Phone number input
-    # -----------------------------
+    # Ask for phone number
     phone_number = await listen(cq, "Please enter your <b>phone number</b> to proceed:")
-    await cq.message.reply_text("📩 Sending OTP to the given number...")
+    await cq.message.reply_text("Trying to send OTP to the given number...")
 
-    # -----------------------------
     # Initialize client
-    # -----------------------------
     client = (
         Client(name="Anony", api_id=api_id, api_hash=api_hash, in_memory=True)
         if pyrogram_mode
@@ -79,9 +77,7 @@ async def _gen_session(_, cq: types.CallbackQuery):
     )
     await client.connect()
 
-    # -----------------------------
     # Send OTP
-    # -----------------------------
     try:
         code = (
             await client.send_code(phone_number)
@@ -91,33 +87,29 @@ async def _gen_session(_, cq: types.CallbackQuery):
         await asyncio.sleep(1)
     except errors.FloodWait as f:
         return await cq.message.reply_text(
-            f"⚠️ Failed to send code. Wait {f.value} seconds.", reply_markup=buttons.retry_key()
+            f"Failed to send code. Wait {f.value} seconds.", reply_markup=buttons.retry_key()
         )
     except (errors.ApiIdInvalid, telerror.ApiIdInvalidError):
         return await cq.message.reply_text(
-            "❌ API ID or API HASH invalid.\nPlease start again.", reply_markup=buttons.retry_key()
+            "API ID or API HASH invalid.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except (errors.PhoneNumberInvalid, telerror.PhoneNumberInvalidError):
         return await cq.message.reply_text(
-            "❌ Phone number invalid.\nPlease start again.", reply_markup=buttons.retry_key()
+            "Phone number invalid.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except Exception as ex:
-        return await cq.message.reply_text(f"⚠️ Error: <code>{str(ex)}</code>")
+        return await cq.message.reply_text(f"Error: <code>{str(ex)}</code>")
 
-    # -----------------------------
-    # OTP input
-    # -----------------------------
+    # Ask for OTP
     otp = await listen(
         cq,
         f"Enter the OTP sent to {phone_number}.\n"
-        "If OTP is <code>12345</code>, send it as <code>1 2 3 4 5</code>.",
-        timeout=600,
+        "If OTP is <code>12345</code>, send it as <code>1 2 3 4 5</code>",
+        timeout=600
     )
     otp = otp.replace(" ", "")
 
-    # -----------------------------
     # Sign in
-    # -----------------------------
     try:
         if pyrogram_mode:
             await client.sign_in(phone_number, code.phone_code_hash, otp)
@@ -125,11 +117,11 @@ async def _gen_session(_, cq: types.CallbackQuery):
             await client.sign_in(phone_number, otp)
     except (errors.PhoneCodeInvalid, telerror.PhoneCodeInvalidError):
         return await cq.message.reply_text(
-            "❌ OTP is wrong.\nPlease start again.", reply_markup=buttons.retry_key()
+            "OTP is wrong.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except (errors.PhoneCodeExpired, telerror.PhoneCodeExpiredError):
         return await cq.message.reply_text(
-            "❌ OTP expired.\nPlease start again.", reply_markup=buttons.retry_key()
+            "OTP expired.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except (errors.SessionPasswordNeeded, telerror.SessionPasswordNeededError):
         pwd = await listen(cq, "Enter your two-step verification password:")
@@ -140,14 +132,12 @@ async def _gen_session(_, cq: types.CallbackQuery):
                 await client.sign_in(password=pwd)
         except (errors.PasswordHashInvalid, telerror.PasswordHashInvalidError):
             return await cq.message.reply_text(
-                "❌ Password wrong.\nPlease start again.", reply_markup=buttons.retry_key()
+                "Password wrong.\nPlease start again.", reply_markup=buttons.retry_key()
             )
     except Exception as ex:
-        return await cq.message.reply_text(f"⚠️ Error: <code>{str(ex)}</code>")
+        return await cq.message.reply_text(f"Error: <code>{str(ex)}</code>")
 
-    # -----------------------------
     # Export session string
-    # -----------------------------
     try:
         txt = (
             "Here is your {0} session\n\n<code>{1}</code>\n\n"
@@ -160,7 +150,8 @@ async def _gen_session(_, cq: types.CallbackQuery):
             await client.send_message(
                 "me",
                 txt.format(sgen, string_session, SUPPORT_CHAT),
-                link_preview_options=types.LinkPreviewOptions(is_disabled=True),
+                disable_web_page_preview=True,  # ✅ Pyrogram v2 fix
+                parse_mode="html"
             )
         else:
             string_session = client.session.save()
@@ -171,7 +162,7 @@ async def _gen_session(_, cq: types.CallbackQuery):
                 parse_mode="html",
             )
 
-        # Join channel if exists
+        # Join channel
         try:
             if pyrogram_mode:
                 await client.join_chat("NexaCoders")
@@ -183,16 +174,14 @@ async def _gen_session(_, cq: types.CallbackQuery):
     except Exception as ex:
         await cq.message.reply_text(f"⚠️ Failed to export session: <code>{str(ex)}</code>")
 
-    # -----------------------------
     # Disconnect and notify user
-    # -----------------------------
     try:
         await client.disconnect()
         await cq.message.reply_text(
-            f"✅ Successfully generated your {sgen} string session.\n"
+            f"✅ Successfully generated your {sgen} string session.\n\n"
             "Check your Saved Messages to get it.\n\n"
             f"A string generator bot by <a href={SUPPORT_CHAT}>Veron Updates</a>.",
-            reply_markup=buttons.pm_key(cq.from_user.id),
+            reply_markup=buttons.pm_key(cq.from_user.id)
         )
     except:
         pass
