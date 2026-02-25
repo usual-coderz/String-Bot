@@ -38,42 +38,46 @@ async def _gen_session(_, cq: types.CallbackQuery):
     pyrogram_mode = sgen == "pyrogram"
     await cq.answer()
 
-    # First instruction
+    # Instruction
     await cq.message.reply_text(
         f"Starting {sgen} session generator...\n\n"
-        "If you don't have API ID or API HASH, send <code>/skip</code> to use default bot values."
+        "If you don't have API ID or API HASH, send <code>/skip</code> to use the bot's default values."
     )
 
-    # Ask for API ID
-    api_id_text = await listen(cq, "Please enter your <b>API ID</b> or send /skip:")
+    # -----------------------------
+    # Ask for API ID or skip both
+    # -----------------------------
+    api_id_text = await listen(cq, "Please enter your <b>API ID</b> or /skip:")
     if api_id_text.strip() == "/skip":
         api_id = API_ID
+        api_hash = API_HASH
     else:
         try:
             api_id = int(api_id_text)
         except ValueError:
             return await cq.message.reply_text(
-                "The <b>API ID</b> you sent is invalid.\n\nPlease start again.",
+                "The API ID you sent is invalid.\n\nPlease start again.",
                 reply_markup=buttons.retry_key(),
             )
 
-    # Ask for API HASH
-    api_hash_text = await listen(cq, "Please enter your <b>API HASH</b> or send /skip:")
-    if api_hash_text.strip() == "/skip":
-        api_hash = API_HASH
-    elif len(api_hash_text) < 30:
-        return await cq.message.reply_text(
-            "The <b>API HASH</b> you sent is invalid.\n\nPlease start again.",
-            reply_markup=buttons.retry_key(),
-        )
-    else:
+        # Ask for API HASH only if API ID was entered
+        api_hash_text = await listen(cq, "Please enter your <b>API HASH</b>:")
+        if len(api_hash_text) < 30:
+            return await cq.message.reply_text(
+                "The API HASH you sent is invalid.\n\nPlease start again.",
+                reply_markup=buttons.retry_key(),
+            )
         api_hash = api_hash_text
 
+    # -----------------------------
     # Ask for phone number
+    # -----------------------------
     phone_number = await listen(cq, "Please enter your <b>phone number</b> to proceed:")
     await cq.message.reply_text("Trying to send OTP to the given number...")
 
+    # -----------------------------
     # Initialize client
+    # -----------------------------
     client = (
         Client(name="Anony", api_id=api_id, api_hash=api_hash, in_memory=True)
         if pyrogram_mode
@@ -81,7 +85,9 @@ async def _gen_session(_, cq: types.CallbackQuery):
     )
     await client.connect()
 
+    # -----------------------------
     # Send OTP
+    # -----------------------------
     try:
         code = (
             await client.send_code(phone_number)
@@ -91,8 +97,7 @@ async def _gen_session(_, cq: types.CallbackQuery):
         await asyncio.sleep(1)
     except errors.FloodWait as f:
         return await cq.message.reply_text(
-            f"Failed to send code.\nWait {f.value} seconds and try again.",
-            reply_markup=buttons.retry_key(),
+            f"Failed to send code. Wait {f.value} seconds.", reply_markup=buttons.retry_key()
         )
     except (errors.ApiIdInvalid, telerror.ApiIdInvalidError):
         return await cq.message.reply_text(
@@ -105,15 +110,19 @@ async def _gen_session(_, cq: types.CallbackQuery):
     except Exception as ex:
         return await cq.message.reply_text(f"Error: <code>{str(ex)}</code>")
 
+    # -----------------------------
     # Ask for OTP
+    # -----------------------------
     otp = await listen(
         cq,
-        f"Please enter the OTP sent to {phone_number}.\nIf OTP is <code>12345</code>, send it as <code>1 2 3 4 5</code>",
+        f"Enter the OTP sent to {phone_number}.\nIf OTP is <code>12345</code>, send as <code>1 2 3 4 5</code>",
         timeout=600,
     )
     otp = otp.replace(" ", "")
 
+    # -----------------------------
     # Sign in
+    # -----------------------------
     try:
         if pyrogram_mode:
             await client.sign_in(phone_number, code.phone_code_hash, otp)
@@ -121,15 +130,14 @@ async def _gen_session(_, cq: types.CallbackQuery):
             await client.sign_in(phone_number, otp)
     except (errors.PhoneCodeInvalid, telerror.PhoneCodeInvalidError):
         return await cq.message.reply_text(
-            "OTP is <b>wrong</b>.\nPlease start again.", reply_markup=buttons.retry_key()
+            "OTP is wrong.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except (errors.PhoneCodeExpired, telerror.PhoneCodeExpiredError):
         return await cq.message.reply_text(
-            "OTP <b>expired</b>.\nPlease start again.", reply_markup=buttons.retry_key()
+            "OTP expired.\nPlease start again.", reply_markup=buttons.retry_key()
         )
     except (errors.SessionPasswordNeeded, telerror.SessionPasswordNeededError):
         pwd = await listen(cq, "Enter your two-step verification password:")
-
         try:
             if pyrogram_mode:
                 await client.check_password(password=pwd)
@@ -142,11 +150,13 @@ async def _gen_session(_, cq: types.CallbackQuery):
     except Exception as ex:
         return await cq.message.reply_text(f"Error: <code>{str(ex)}</code>")
 
+    # -----------------------------
     # Export session string
+    # -----------------------------
     try:
         txt = (
             "Here is your {0} session\n\n<code>{1}</code>\n\n"
-            "A session generator bot by <a href={2}>Fallen Association</a>\n"
+            "A session generator bot by <a href={2}>Veron Updates</a>\n"
             "☠ <b>Note:</b> Don't share the session with anyone."
         )
 
@@ -157,10 +167,6 @@ async def _gen_session(_, cq: types.CallbackQuery):
                 txt.format(sgen, string_session, SUPPORT_CHAT),
                 link_preview_options=types.LinkPreviewOptions(is_disabled=True),
             )
-            try:
-                await client.join_chat("NexaCoders")
-            except:
-                pass
         else:
             string_session = client.session.save()
             await client.send_message(
@@ -169,19 +175,27 @@ async def _gen_session(_, cq: types.CallbackQuery):
                 link_preview=False,
                 parse_mode="html",
             )
-            try:
-                await client(JoinChannelRequest("@NexaCoders"))
-            except:
-                pass
-    except Exception:
-        pass
 
-    # Disconnect and inform user
+        # Join channel if exists
+        try:
+            if pyrogram_mode:
+                await client.join_chat("NexaCoders")
+            else:
+                await client(JoinChannelRequest("@NexaCoders"))
+        except:
+            pass
+
+    except Exception as ex:
+        await cq.message.reply_text(f"Failed to export session: <code>{str(ex)}</code>")
+
+    # -----------------------------
+    # Disconnect and notify user
+    # -----------------------------
     try:
         await client.disconnect()
         await cq.message.reply_text(
-            f"Successfully generated your {sgen} string session.\n\n"
-            "Check your saved messages to get it.\n\n"
+            f"✅ Successfully generated your {sgen} string session.\n\n"
+            "Check your Saved Messages to get it.\n\n"
             f"A string generator bot by <a href={SUPPORT_CHAT}>Veron Updates</a>.",
             reply_markup=buttons.pm_key(cq.from_user.id),
         )
