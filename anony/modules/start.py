@@ -18,7 +18,7 @@ async def f_start(_, m):
     await m.reply_text(
         f"Hey {m.from_user.first_name},\n\n"
         f"This is {app.mention},\n"
-        "An open source session generator bot.",
+        "Tʜɪs Is ᴀ Sᴛʀɪɴɢ Sᴇssɪᴏɴ Gᴇɴᴇʀᴀᴛᴏʀ Bᴏᴛ Mᴀᴅᴇ Wɪᴛʜ Yᴏᴜʀ Lᴏᴠᴇs ☄️",
         reply_markup=buttons.start_key()
     )
 
