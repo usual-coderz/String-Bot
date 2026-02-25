@@ -12,8 +12,8 @@ class Inline:
         return self.ikm(
             [
                 [
-                    self.ikb(text=f"Pyrogram v{pv}", callback_data="pyrogram"),
-                    self.ikb(text=f"Telethon v{tv}", callback_data="telethon"),
+                    self.ikb(text=f"Pyrogram", callback_data="pyrogram"),
+                    self.ikb(text=f"Telethon", callback_data="telethon"),
                 ]
             ]
         )
