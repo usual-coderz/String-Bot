@@ -30,3 +30,28 @@ class Database:
 
     async def get_users(self) -> list:
         return [doc["user_id"] async for doc in self.users.find()]
+
+# =====================================
+# FORCE JOIN DATABASE
+# =====================================
+
+async def get_forcejoin_channels():
+    data = await db.settings.find_one({"_id": "forcejoin"})
+    if not data:
+        return []
+    return data.get("links", [])
+
+
+async def add_forcejoin_channel(link: str):
+    await db.settings.update_one(
+        {"_id": "forcejoin"},
+        {"$addToSet": {"links": link}},
+        upsert=True
+    )
+
+
+async def remove_forcejoin_channel(link: str):
+    await db.settings.update_one(
+        {"_id": "forcejoin"},
+        {"$pull": {"links": link}}
+    )
